@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Food ✨</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: #f9f9f9;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent-color: #3b82f6;
+            --border-color: #e5e7eb;
+            --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            color: var(--text-primary);
+            /* ✨ Background color updated as requested */
+            background-color: #5b634b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        /* --- iPad Frame --- */
+        .ipad-frame {
+            background: #111; padding: 20px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 2px #333;
+            width: 100%; height: auto; max-width: 1024px; max-height: 90vh; aspect-ratio: 4 / 3;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .ipad-controls { position: absolute; top: 28px; left: 35px; display: flex; gap: 8px; z-index: 10; }
+        .ipad-controls > div { width: 12px; height: 12px; border-radius: 50%; }
+        .control-close { background-color: #ff5f56; }
+        .control-minimize { background-color: #ffbd2e; }
+        .control-maximize { background-color: #27c93f; }
+        .ipad-screen { background: var(--background); flex-grow: 1; border-radius: 20px; overflow: auto; position: relative; }
+        
+        /* --- Content --- */
+        .container {
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .view { width: 100%; }
+        .view.is-hidden { display: none; }
+
+        h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); }
+        p { font-size: 1.1rem; color: var(--text-secondary); max-width: 450px; margin: 0 auto 2.5rem auto; line-height: 1.6; }
+
+        .mood-selection-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .mood-card {
+            background: #fff; border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 1.5rem; cursor: pointer; box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            width: 160px;
+            box-sizing: border-box;
+        }
+
+        .mood-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); border-color: var(--accent-color); }
+
+        .mood-emoji { font-size: 3rem; line-height: 1; }
+        .mood-name { font-size: 1.1rem; font-weight: 600; margin-top: 0.75rem; color: var(--text-primary); }
+
+        #suggestion-header { font-size: 1.8rem; font-weight: 600; margin-bottom: 2rem; color: var(--text-primary); }
+        
+        #suggestion-container { display: grid; grid-template-columns: 1fr; gap: 1.5rem; width: 100%; }
+
+        .food-card {
+            background: #fff; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--card-shadow);
+            overflow: hidden; text-align: left; display: flex; align-items: center;
+            opacity: 0; animation: fadeInUp 0.5s ease-out forwards;
+        }
+
+        .food-card img { width: 120px; height: 120px; object-fit: cover; }
+        .food-card .content { padding: 1.5rem; }
+        .food-card h3 { margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600; }
+        .food-card p { font-size: 1rem; color: var(--text-secondary); margin: 0; line-height: 1.5; }
+
+        .reset-button {
+             margin-top: 3rem; background-color: var(--accent-color); color: white; border: none;
+             padding: 12px 30px; border-radius: 50px; font-size: 1rem; font-weight: 600;
+             cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .reset-button:hover { transform: scale(1.05); background-color: #2563eb; }
+
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="ipad-frame">
+        <div class="ipad-controls">
+            <div class="control-close"></div>
+            <div class="control-minimize"></div>
+            <div class="control-maximize"></div>
+        </div>
+        <div class="ipad-screen" id="ipad-screen">
+            <div class="container">
+                <div id="mood-selector" class="view">
+                    <h1>Discover Your Next Craving</h1>
+                    <p>Tell us how you're feeling and we'll find the perfect dish for you.</p>
+                    <div class="mood-selection-grid" id="mood-selection-grid">
+                        </div>
+                </div>
+                <div id="suggestion-view" class="view is-hidden">
+                    <h2 id="suggestion-header"></h2>
+                    <div id="suggestion-container"></div>
+                    <button id="reset-btn" class="reset-button">Try another mood</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // No changes to the JavaScript are needed.
+        const moodSelectorView = document.getElementById('mood-selector');
+        const suggestionView = document.getElementById('suggestion-view');
+        const suggestionHeader = document.getElementById('suggestion-header');
+        const suggestionContainer = document.getElementById('suggestion-container');
+        const moodSelectionGrid = document.getElementById('mood-selection-grid');
+        const resetButton = document.getElementById('reset-btn');
+        const ipadScreen = document.getElementById('ipad-screen');
+        const API_URL_SUGGESTIONS = '/api/suggestions';
+        const API_URL_MOODS = '/api/moods';
+        async function loadMoods() {
+            try {
+                const response = await fetch(API_URL_MOODS);
+                const moods = await response.json();
+                moodSelectionGrid.innerHTML = '';
+                moods.forEach(mood => {
+                    const moodCard = document.createElement('div');
+                    moodCard.className = 'mood-card';
+                    moodCard.dataset.mood = mood.name;
+                    moodCard.innerHTML = `
+                        <div class="mood-emoji">${mood.emoji}</div>
+                        <div class="mood-name">${mood.name}</div>
+                    `;
+                    moodSelectionGrid.appendChild(moodCard);
+                });
+            } catch (error) {
+                console.error('Failed to load moods:', error);
+                moodSelectionGrid.innerHTML = '<p>Could not load moods.</p>';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadMoods);
+        moodSelectionGrid.addEventListener('click', (event) => {
+            const moodCard = event.target.closest('.mood-card');
+            if (moodCard) {
+                const mood = moodCard.dataset.mood;
+                fetchAndDisplaySuggestions(mood);
+            }
+        });
+        resetButton.addEventListener('click', () => {
+            suggestionView.classList.add('is-hidden');
+            moodSelectorView.classList.remove('is-hidden');
+            ipadScreen.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        async function fetchAndDisplaySuggestions(mood) {
+            moodSelectorView.classList.add('is-hidden');
+            suggestionView.classList.remove('is-hidden');
+            suggestionHeader.textContent = `For a ${mood} mood, we suggest...`;
+            suggestionContainer.innerHTML = '<h2>Loading...</h2>';
+            try {
+                const response = await fetch(`${API_URL_SUGGESTIONS}?mood=${mood}`);
+                const foods = await response.json();
+                suggestionContainer.innerHTML = '';
+                if (foods.length === 0) {
+                    suggestionContainer.innerHTML = '<p>No suggestions found. Add some in the admin panel!</p>';
+                    return;
+                }
+                foods.forEach((food, index) => {
+                    const card = createFoodCard(food);
+                    card.style.animationDelay = `${index * 100}ms`;
+                    suggestionContainer.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Failed to fetch suggestions:', error);
+                suggestionContainer.innerHTML = '<p>Oops! Something went wrong.</p>';
+            }
+        }
+        function createFoodCard(food) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'food-card';
+            cardDiv.innerHTML = `
+                <img src="${food.imageUrl}" alt="${food.name}" onerror="this.onerror=null;this.src='https.via.placeholder.com/120x120?text=Image';">
+                <div class="content">
+                    <h3>${food.name}</h3>
+                    <p>${food.description}</p>
+                </div>
+            `;
+            return cardDiv;
+        }
+    </script>
+</body>
+</html>

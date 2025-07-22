@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; color: #333; margin: 20px; }
+        h1, h2 { color: #555; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        input, select, button { padding: 10px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; width: calc(100% - 22px); }
+        button { background-color: #007bff; color: white; cursor: pointer; border: none; }
+        button.delete { background-color: #dc3545; }
+        button.edit { background-color: #ffc107; color: #212529; margin-right: 5px;}
+        ul { list-style-type: none; padding: 0; }
+        li { background: #fff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .buttons-cell { flex-shrink: 0; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-view">
+        <h1>Admin Login</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="Username" required value="admin">
+            <input type="password" id="password" placeholder="Password" required value="password">
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="admin-dashboard" class="hidden">
+        <h1>Admin Dashboard</h1>
+        <div class="grid-container">
+            <div>
+                <h2 id="food-form-title">Add New Dish</h2>
+                <form id="food-form">
+                    <input type="hidden" id="food-edit-id">
+                    <input type="text" id="food-name" placeholder="Dish Name" required>
+                    <input type="text" id="food-description" placeholder="Description" required>
+                    <input type="text" id="food-imageUrl" placeholder="Image URL" required>
+                    <select id="food-mood-id" required></select>
+                    <button type="submit" id="food-submit-button">Add Dish</button>
+                </form>
+                <h2>Manage Dishes</h2>
+                <ul id="food-list"></ul>
+            </div>
+            <div>
+                <h2 id="mood-form-title">Add New Mood</h2>
+                <form id="mood-form">
+                    <input type="hidden" id="mood-edit-id">
+                    <input type="text" id="mood-name" placeholder="Mood Name" required>
+                    <input type="text" id="mood-emoji" placeholder="Emoji" required>
+                    <button type="submit" id="mood-submit-button">Add Mood</button>
+                </form>
+                <h2>Manage Moods</h2>
+                <ul id="mood-list"></ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Element Selectors ---
+    const loginView = document.getElementById('login-view');
+    const adminDashboard = document.getElementById('admin-dashboard');
+    const loginForm = document.getElementById('login-form');
+    // Food elements
+    const foodForm = document.getElementById('food-form');
+    const foodList = document.getElementById('food-list');
+    const foodFormTitle = document.getElementById('food-form-title');
+    const foodSubmitButton = document.getElementById('food-submit-button');
+    const foodMoodSelect = document.getElementById('food-mood-id');
+    // Mood elements
+    const moodForm = document.getElementById('mood-form');
+    const moodList = document.getElementById('mood-list');
+    const moodFormTitle = document.getElementById('mood-form-title');
+    const moodSubmitButton = document.getElementById('mood-submit-button');
+
+
+    // --- LOGIN ---
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // ... login logic ...
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        });
+        if (response.ok) {
+            loginView.classList.add('hidden');
+            adminDashboard.classList.remove('hidden');
+            // Load initial data
+            loadMoods();
+            loadFoods();
+        } else {
+            alert('Login failed!');
+        }
+    });
+
+    // --- MOODS CRUD ---
+    async function loadMoods() {
+        const response = await fetch('/api/moods');
+        const moods = await response.json();
+        moodList.innerHTML = '';
+        foodMoodSelect.innerHTML = ''; // Clear dropdown
+        moods.forEach(mood => {
+            // Populate Manage Moods list
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${mood.emoji} <strong>${mood.name}</strong></span>`;
+            const buttonsCell = document.createElement('div');
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit';
+            editBtn.onclick = () => populateMoodEditForm(mood);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete';
+            deleteBtn.onclick = () => deleteMood(mood.id);
+            buttonsCell.appendChild(editBtn);
+            buttonsCell.appendChild(deleteBtn);
+            li.appendChild(buttonsCell);
+            moodList.appendChild(li);
+            // Populate Add/Edit Dish dropdown
+            const option = document.createElement('option');
+            option.value = mood.id;
+            option.textContent = mood.name;
+            foodMoodSelect.appendChild(option);
+        });
+    }
+
+    moodForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('mood-edit-id').value;
+        const moodData = {
+            name: document.getElementById('mood-name').value,
+            emoji: document.getElementById('mood-emoji').value
+        };
+        const url = id ? `/api/moods/${id}` : '/api/moods';
+        const method = id ? 'PUT' : 'POST';
+        await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(moodData)
+        });
+        resetMoodForm();
+        loadMoods();
+    });
+
+    function populateMoodEditForm(mood) {
+        moodFormTitle.textContent = 'Edit Mood';
+        moodSubmitButton.textContent = 'Update Mood';
+        document.getElementById('mood-edit-id').value = mood.id;
+        document.getElementById('mood-name').value = mood.name;
+        document.getElementById('mood-emoji').value = mood.emoji;
+    }
+
+    function resetMoodForm() {
+        moodFormTitle.textContent = 'Add New Mood';
+        moodSubmitButton.textContent = 'Add Mood';
+        moodForm.reset();
+        document.getElementById('mood-edit-id').value = '';
+    }
+
+    async function deleteMood(id) {
+        if (confirm('Are you sure? Deleting a mood will also delete all associated dishes.')) {
+            await fetch(`/api/moods/${id}`, { method: 'DELETE' });
+            loadMoods();
+            loadFoods();
+        }
+    }
+
+    // --- FOODS CRUD ---
+    async function loadFoods() {
+        const response = await fetch('/api/foods');
+        const foods = await response.json();
+        foodList.innerHTML = '';
+        foods.forEach(food => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span><strong>${food.name}</strong> (${food.mood})</span>`;
+            const buttonsCell = document.createElement('div');
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit';
+            editBtn.onclick = () => populateFoodEditForm(food);
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete';
+            deleteBtn.onclick = () => deleteFood(food.id);
+            buttonsCell.appendChild(editBtn);
+            buttonsCell.appendChild(deleteBtn);
+            li.appendChild(buttonsCell);
+            foodList.appendChild(li);
+        });
+    }
+    
+    foodForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('food-edit-id').value;
+        const foodData = {
+            name: document.getElementById('food-name').value,
+            description: document.getElementById('food-description').value,
+            imageUrl: document.getElementById('food-imageUrl').value,
+            mood_id: document.getElementById('food-mood-id').value
+        };
+        const url = id ? `/api/foods/${id}` : '/api/foods';
+        const method = id ? 'PUT' : 'POST';
+        await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(foodData)
+        });
+        resetFoodForm();
+        loadFoods();
+    });
+
+    async function populateFoodEditForm(food) {
+        // We need to fetch the full food details including mood_id first
+        // For simplicity, we'll assume the mood name matches an option. In a real app, you might need another API call.
+        foodFormTitle.textContent = 'Edit Dish';
+        foodSubmitButton.textContent = 'Update Dish';
+        document.getElementById('food-edit-id').value = food.id;
+        document.getElementById('food-name').value = food.name;
+        document.getElementById('food-description').value = food.description;
+        document.getElementById('food-imageUrl').value = food.imageUrl;
+        
+        // Find the option in the dropdown that matches the food's mood name
+        const options = foodMoodSelect.options;
+        for (let i = 0; i < options.length; i++) {
+            if (options[i].text === food.mood) {
+                foodMoodSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    
+    function resetFoodForm() {
+        foodFormTitle.textContent = 'Add New Dish';
+        foodSubmitButton.textContent = 'Add Dish';
+        foodForm.reset();
+        document.getElementById('food-edit-id').value = '';
+    }
+
+    async function deleteFood(id) {
+        if (confirm('Are you sure you want to delete this dish?')) {
+            await fetch(`/api/foods/${id}`, { method: 'DELETE' });
+            loadFoods();
+        }
+    }
+</script>
+
+</body>
+</html>

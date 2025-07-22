@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Mood Food ✨</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b7280;
+            --dark-accent: #2c3e50;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* --- Page Layout --- */
+        .page {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            position: relative;
+        }
+
+        .page.is-active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* ✨ --- Page 1: Redesigned Logo Page --- */
+        #page-1 {
+            background-image: url('wallpaper.jpg');
+            background-size: cover;
+            background-position: center;
+            flex-direction: column;
+            cursor: pointer;
+            /* These properties ensure perfect centering */
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #page-1::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #logo {
+            max-width: 300px;
+            margin-bottom: 1rem;
+            animation: fadeInScaleUp 1.5s ease-out;
+            position: relative;
+        }
+
+        #page-1 p {
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 400;
+            letter-spacing: 1px;
+            animation: fadeIn 2s ease-out, pulse 2.5s infinite ease-in-out;
+            position: relative;
+        }
+
+        /* --- Page 2: Wallpaper Page --- */
+        #page-2 {
+            background-image: url('wallpaper.jpg');
+            background-size: cover;
+            background-position: center;
+            flex-direction: column;
+        }
+
+        .entry-box {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 3.5rem 5rem;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .entry-box h1 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 3.5rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .entry-subheading {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 0;
+            margin-bottom: 2.5rem;
+        }
+
+        .entry-button {
+            background-color: var(--dark-accent);
+            color: #fff;
+            text-decoration: none;
+            padding: 1rem 3.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .entry-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            background-color: #34495e;
+        }
+        
+        /* --- Animation Keyframes --- */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInScaleUp {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <section id="page-1" class="page is-active">
+        <img id="logo" src="Logo.png" alt="ORB Logo">
+        <p>Click anywhere to begin</p>
+    </section>
+
+    <section id="page-2" class="page">
+        <div class="entry-box">
+            <h1>How are you feeling?</h1>
+            <p class="entry-subheading">Let's find the perfect dish for you.</p>
+            <a href="/app" class="entry-button">Find Your Craving</a>
+        </div>
+    </section>
+
+    <script>
+        const page1 = document.getElementById('page-1');
+        const page2 = document.getElementById('page-2');
+
+        page1.addEventListener('click', () => {
+            page1.classList.remove('is-active');
+            page2.classList.add('is-active');
+        });
+    </script>
+</body>
+</html>
